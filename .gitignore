@@ -427,3 +427,18 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# --- Node / TypeScript (monorepo) ---
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.tsbuildinfo
+coverage/
+**/coverage/
+*.log
+npm-debug.log*
+.env
+.env.*
+*.vsix
+.vscode-test/

@@ -132,14 +132,14 @@ The token endpoint is rate-limited to **5 requests per minute**. The SDK automat
 
 Configure the server using environment variables:
 
-| Variable                  | Required    | Description                                                                        |
-| ------------------------- | ----------- | ---------------------------------------------------------------------------------- |
-| `OFFICERND_CLIENT_ID`     | ✅          | Your OAuth2 Client ID                                                              |
-| `OFFICERND_CLIENT_SECRET` | ✅          | Your OAuth2 Client Secret                                                          |
-| `OFFICERND_ORG`           | Recommended | Organization slug (subdomain)                                                      |
+| Variable                  | Required    | Description                                                                                |
+| ------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| `OFFICERND_CLIENT_ID`     | ✅          | Your OAuth2 Client ID                                                                      |
+| `OFFICERND_CLIENT_SECRET` | ✅          | Your OAuth2 Client Secret                                                                  |
+| `OFFICERND_ORG`           | Recommended | Organization slug (subdomain)                                                              |
 | `OFFICERND_SCOPES`        | ✅          | Space-separated OAuth2 scopes (e.g. `flex.community.members.read`). Required by OfficeRnD. |
-| `OFFICERND_API_VERSION`   | No          | API version: `v2` (default) or `v1`                                                |
-| `OFFICERND_LOG_LEVEL`     | No          | Log level: `debug`, `info` (default), `warn`, `error`                              |
+| `OFFICERND_API_VERSION`   | No          | API version: `v2` (default) or `v1`                                                        |
+| `OFFICERND_LOG_LEVEL`     | No          | Log level: `debug`, `info` (default), `warn`, `error`                                      |
 
 ### Example
 

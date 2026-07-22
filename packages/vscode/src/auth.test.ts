@@ -26,9 +26,7 @@ describe('buildConnectionTestRequestBody', () => {
     ]);
     const params = new URLSearchParams(body);
 
-    expect(params.get('scope')).toBe(
-      'flex.community.members.read flex.community.members.create',
-    );
+    expect(params.get('scope')).toBe('flex.community.members.read flex.community.members.create');
   });
 });
 

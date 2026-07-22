@@ -62,7 +62,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Publish VS Code extension to Marketplace
-        if: ${{ secrets.VSCE_PAT != '' }}
+        if: ${{ env.VSCE_PAT != '' }}
         run: |
           cd packages/vscode
           vsce publish --no-dependencies --pat "$VSCE_PAT"

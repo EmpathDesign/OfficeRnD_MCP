@@ -41,6 +41,7 @@ jobs:
 
       - name: Pack MCP server
         run: |
+          mkdir -p artifacts
           cd packages/mcp
           npm pack --pack-destination ../../artifacts/
           cd ../sdk

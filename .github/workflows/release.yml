@@ -53,6 +53,9 @@ jobs:
       - name: Pack VS Code extension
         run: |
           npm install -g @vscode/vsce
+          EXT_VERSION=$(node -e "const version=require('./packages/vscode/package.json').version; const [major, minor] = version.split('.'); console.log(major + '.' + minor + '.' + process.env.GITHUB_RUN_NUMBER);")
+          npm --prefix packages/vscode version "$EXT_VERSION" --no-git-tag-version
+          echo "Packaging VS Code extension version: $EXT_VERSION"
           cd packages/vscode
           vsce package --no-dependencies --out ../../artifacts/
         working-directory: ${{ github.workspace }}

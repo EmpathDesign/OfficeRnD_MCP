@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { buildConnectionTestRequestBody } from './auth.js';
+import { buildConnectionTestRequestBody, normalizeScopes } from './auth.js';
 
 const SECRET_KEY_CLIENT_ID = 'officernd.clientId';
 const SECRET_KEY_CLIENT_SECRET = 'officernd.clientSecret';
@@ -82,6 +82,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('officernd.testConnection', async () => {
       const clientId = await context.secrets.get(SECRET_KEY_CLIENT_ID);
       const clientSecret = await context.secrets.get(SECRET_KEY_CLIENT_SECRET);
+      const config = vscode.workspace.getConfiguration();
+      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v2');
+      const orgSlug = config.get<string>(CONFIG_KEY_ORG_SLUG, '');
+      const scopes = normalizeScopes(config.get<string[]>(CONFIG_KEY_SCOPES, []));
 
       if (!clientId || !clientSecret) {
         void vscode.window.showErrorMessage(
@@ -92,10 +96,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
       try {
         statusBar.text = '$(sync~spin) OfficeRnD Testing...';
+        outputChannel.appendLine(
+          `Testing OfficeRnD connection (tokenUrl=https://identity.officernd.com/oauth/token, clientId=***${clientId.slice(-4)}, org=${orgSlug || '(not set)'}, apiVersion=${apiVersion}, scopes=${scopes.length > 0 ? scopes.join(' ') : '(none)'})`,
+        );
         const response = await fetch('https://identity.officernd.com/oauth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: buildConnectionTestRequestBody(clientId, clientSecret),
+          body: buildConnectionTestRequestBody(clientId, clientSecret, scopes),
         });
 
         if (response.ok) {
@@ -104,9 +111,24 @@ export function activate(context: vscode.ExtensionContext): void {
           void vscode.window.showInformationMessage('✓ Connected to OfficeRnD successfully!');
         } else {
           const errorText = await response.text().catch(() => response.statusText);
+          const requestId =
+            response.headers.get('x-request-id') ??
+            response.headers.get('x-correlation-id') ??
+            '(not provided)';
+          const parsedErrorText = parseTokenEndpointError(errorText);
           statusBar.text = '$(error) OfficeRnD Error';
-          outputChannel.appendLine(`OfficeRnD connection failed: ${errorText}`);
-          void vscode.window.showErrorMessage(`Connection failed: ${errorText}`);
+          outputChannel.appendLine(
+            `OfficeRnD connection failed (status=${response.status}, requestId=${requestId}): ${parsedErrorText}`,
+          );
+          if (parsedErrorText !== errorText) {
+            outputChannel.appendLine(`Raw token endpoint response: ${errorText}`);
+          }
+          if (parsedErrorText.toLowerCase().includes('invalid scope')) {
+            outputChannel.appendLine(
+              'Scope troubleshooting: verify your OAuth2 app has the requested scopes, and update "officernd.scopes" in VS Code settings if needed.',
+            );
+          }
+          void vscode.window.showErrorMessage(`Connection failed: ${parsedErrorText}`);
         }
       } catch (error) {
         statusBar.text = '$(error) OfficeRnD Error';
@@ -195,6 +217,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   // no-op
+}
+
+function parseTokenEndpointError(errorText: string): string {
+  try {
+    const parsed = JSON.parse(errorText) as {
+      error?: string;
+      error_description?: string;
+      message?: string;
+    };
+    const parts = [parsed.error_description, parsed.message, parsed.error]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(' | ');
+    }
+  } catch {
+    // no-op; non-JSON responses are handled by returning raw text
+  }
+
+  return errorText || 'Unknown token endpoint error';
 }
 
 class OfficeRnDTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {

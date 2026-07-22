@@ -424,7 +424,7 @@ OAuth2 token request failed: 401
 ```
 
 - Verify your Client ID and Client Secret are correct
-- Ensure the OAuth2 application has the `officernd.api.access` scope
+- Ensure the OAuth2 application has the Flex API scopes your workflows need (for example `flex.community.members.read`)
 - Check that your organization slug matches your OfficeRnD URL
 
 ### Rate limiting

@@ -50,16 +50,21 @@ export class TokenManager {
     await this.respectRateLimit();
 
     const tokenUrl = this.config.tokenUrl ?? DEFAULT_TOKEN_URL;
-    const scopes = this.config.scopes ?? ['officernd.api.access'];
+    const scopes = this.config.scopes;
 
     this.logger.debug({ tokenUrl, scopes }, 'Fetching OAuth2 token');
 
-    const body = new URLSearchParams({
+    const bodyParams: Record<string, string> = {
       grant_type: 'client_credentials',
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
-      scope: scopes.join(' '),
-    });
+    };
+
+    if (scopes && scopes.length > 0) {
+      bodyParams.scope = scopes.join(' ');
+    }
+
+    const body = new URLSearchParams(bodyParams);
 
     const response = await fetch(tokenUrl, {
       method: 'POST',

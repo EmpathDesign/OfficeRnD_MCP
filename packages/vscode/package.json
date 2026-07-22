@@ -67,6 +67,33 @@
           "name": "Connection Status"
         }
       ]
+    },
+    "configuration": {
+      "title": "OfficeRnD MCP",
+      "properties": {
+        "officernd.organizationSlug": {
+          "type": "string",
+          "default": "",
+          "description": "Your OfficeRnD organization slug (the subdomain in your OfficeRnD URL, e.g. 'my-space' from 'my-space.officernd.com')."
+        },
+        "officernd.apiVersion": {
+          "type": "string",
+          "enum": [
+            "v1",
+            "v2"
+          ],
+          "default": "v2",
+          "description": "OfficeRnD API version to use. Use 'v2' for the Flex API (recommended)."
+        },
+        "officernd.scopes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "OAuth2 scopes to request when authenticating. For the Flex API v2, use scopes like 'flex.community.members.read'. Leave empty to request all scopes available to your client."
+        }
+      }
     }
   },
   "devDependencies": {

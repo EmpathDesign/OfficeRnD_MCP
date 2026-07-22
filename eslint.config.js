@@ -32,6 +32,8 @@ export default [
         Request: 'readonly',
         Headers: 'readonly',
         NodeJS: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
       },
     },
     plugins: {

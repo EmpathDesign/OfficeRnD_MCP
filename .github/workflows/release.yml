@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+      - name: Pack MCP server
+        run: |
+          cd packages/mcp
+          npm pack --pack-destination ../../artifacts/
+          cd ../sdk
+          npm pack --pack-destination ../../artifacts/
+          cd ../core
+          npm pack --pack-destination ../../artifacts/
+        working-directory: ${{ github.workspace }}
+
+      - name: Pack VS Code extension
+        run: |
+          npm install -g @vscode/vsce
+          cd packages/vscode
+          vsce package --no-dependencies --out ../../artifacts/
+        working-directory: ${{ github.workspace }}
+        continue-on-error: true
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body: |
+            ## OfficeRnD MCP Server ${{ steps.version.outputs.tag }}
+
+            ### Packages
+            - `@officernd/sdk` — OfficeRnD REST API SDK
+            - `@officernd/core` — Business logic helpers
+            - `@officernd/mcp` — MCP server (130+ tools)
+            - `officernd-mcp-vscode` — VS Code extension
+
+            ### Installation
+            ```bash
+            npm install -g @officernd/mcp
+            ```
+
+            ### Quick Start
+            ```bash
+            export OFFICERND_CLIENT_ID=your_client_id
+            export OFFICERND_CLIENT_SECRET=your_client_secret
+            export OFFICERND_ORG=your_org_slug
+            officernd-mcp
+            ```
+
+            See the [README](https://github.com/${{ github.repository }}/blob/main/README.md) for full documentation.
+          files: artifacts/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

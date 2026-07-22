@@ -1,0 +1,77 @@
+{
+  "name": "officernd-mcp-vscode",
+  "version": "0.1.0",
+  "description": "VS Code extension for OfficeRnD MCP server — credential management and MCP configuration",
+  "license": "MIT",
+  "displayName": "OfficeRnD MCP",
+  "publisher": "EmpathDesign",
+  "categories": [
+    "Other"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "rimraf dist *.tsbuildinfo",
+    "package": "vsce package --no-dependencies"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "officernd.configure",
+        "title": "OfficeRnD: Configure Connection"
+      },
+      {
+        "command": "officernd.testConnection",
+        "title": "OfficeRnD: Test Connection"
+      },
+      {
+        "command": "officernd.showConfig",
+        "title": "OfficeRnD: Show Configuration"
+      },
+      {
+        "command": "officernd.updateCredentials",
+        "title": "OfficeRnD: Update Credentials"
+      },
+      {
+        "command": "officernd.clearCredentials",
+        "title": "OfficeRnD: Clear Credentials"
+      },
+      {
+        "command": "officernd.generateMcpConfig",
+        "title": "OfficeRnD: Generate MCP Configuration"
+      },
+      {
+        "command": "officernd.openLogs",
+        "title": "OfficeRnD: Open Logs"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "officernd",
+          "title": "OfficeRnD",
+          "icon": "$(server)"
+        }
+      ]
+    },
+    "views": {
+      "officernd": [
+        {
+          "id": "officerndStatus",
+          "name": "Connection Status"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}

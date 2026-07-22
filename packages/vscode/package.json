@@ -78,7 +78,10 @@
         },
         "officernd.apiVersion": {
           "type": "string",
-          "enum": ["v1", "v2"],
+          "enum": [
+            "v1",
+            "v2"
+          ],
           "default": "v2",
           "description": "OfficeRnD API version to use. Use 'v2' for the Flex API (recommended)."
         },

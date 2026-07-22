@@ -19,7 +19,7 @@ const client = new OfficeRnDClient({
   clientId,
   clientSecret,
   organizationSlug,
-  apiVersion: apiVersion ?? 'v1',
+  apiVersion: apiVersion ?? 'v2',
 });
 
 const server = createServer(client);

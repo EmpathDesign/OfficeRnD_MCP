@@ -112,9 +112,17 @@ OfficeRnD uses **OAuth2 Client Credentials** for API access.
 
 ### Required Scopes
 
+For the **Flex API v2** (recommended), grant your OAuth2 application the specific scopes it needs. Examples:
+
 ```
-officernd.api.access
+flex.community.members.read
+flex.community.members.create
+flex.space.bookings.read
+flex.space.bookings.create
+flex.billing.charges.read
 ```
+
+Your OfficeRnD OAuth2 application must be configured with the scopes you want the MCP server to use. If no scopes are specified, the server will request a token without a scope restriction, which grants all scopes configured on your client application.
 
 The token endpoint is rate-limited to **5 requests per minute**. The SDK automatically caches tokens and reuses them until 60 seconds before expiry.
 
@@ -129,7 +137,7 @@ Configure the server using environment variables:
 | `OFFICERND_CLIENT_ID`     | ✅          | Your OAuth2 Client ID                                 |
 | `OFFICERND_CLIENT_SECRET` | ✅          | Your OAuth2 Client Secret                             |
 | `OFFICERND_ORG`           | Recommended | Organization slug (subdomain)                         |
-| `OFFICERND_API_VERSION`   | No          | API version: `v1` (default) or `v2`                   |
+| `OFFICERND_API_VERSION`   | No          | API version: `v2` (default) or `v1`                   |
 | `OFFICERND_LOG_LEVEL`     | No          | Log level: `debug`, `info` (default), `warn`, `error` |
 
 ### Example

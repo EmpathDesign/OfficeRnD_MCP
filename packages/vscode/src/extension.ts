@@ -91,12 +91,17 @@ export function activate(context: vscode.ExtensionContext): void {
 
       try {
         statusBar.text = '$(sync~spin) OfficeRnD Testing...';
-        const body = new URLSearchParams({
+        const testConfig = vscode.workspace.getConfiguration();
+        const testScopes = testConfig.get<string[]>(CONFIG_KEY_SCOPES, []);
+        const bodyParams: Record<string, string> = {
           grant_type: 'client_credentials',
           client_id: clientId,
           client_secret: clientSecret,
-          scope: 'officernd.api.access',
-        });
+        };
+        if (testScopes.length > 0) {
+          bodyParams.scope = testScopes.join(' ');
+        }
+        const body = new URLSearchParams(bodyParams);
 
         const response = await fetch('https://identity.officernd.com/oauth/token', {
           method: 'POST',
@@ -126,8 +131,8 @@ export function activate(context: vscode.ExtensionContext): void {
       const clientSecret = await context.secrets.get(SECRET_KEY_CLIENT_SECRET);
       const config = vscode.workspace.getConfiguration();
       const orgSlug = config.get<string>(CONFIG_KEY_ORG_SLUG, '(not set)');
-      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v1');
-      const scopes = config.get<string[]>(CONFIG_KEY_SCOPES, ['officernd.api.access']);
+      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v2');
+      const scopes = config.get<string[]>(CONFIG_KEY_SCOPES, []);
 
       const message = [
         'OfficeRnD Configuration:',
@@ -135,7 +140,7 @@ export function activate(context: vscode.ExtensionContext): void {
         `  Client Secret: ${clientSecret ? '••••••••' : '(not set)'}`,
         `  Organization: ${orgSlug}`,
         `  API Version: ${apiVersion}`,
-        `  Scopes: ${scopes.join(', ')}`,
+        `  Scopes: ${scopes.length > 0 ? scopes.join(', ') : '(all available)'}`,
       ].join('\n');
 
       void vscode.window.showInformationMessage(message, { modal: true });
@@ -169,7 +174,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
       const config = vscode.workspace.getConfiguration();
       const orgSlug = config.get<string>(CONFIG_KEY_ORG_SLUG, '');
-      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v1');
+      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v2');
       const mcpConfig = {
         servers: {
           officernd: {
@@ -178,7 +183,7 @@ export function activate(context: vscode.ExtensionContext): void {
               OFFICERND_CLIENT_ID: '${env:OFFICERND_CLIENT_ID}',
               OFFICERND_CLIENT_SECRET: '${env:OFFICERND_CLIENT_SECRET}',
               ...(orgSlug ? { OFFICERND_ORG: orgSlug } : {}),
-              ...(apiVersion !== 'v1' ? { OFFICERND_API_VERSION: apiVersion } : {}),
+              OFFICERND_API_VERSION: apiVersion,
             },
           },
         },

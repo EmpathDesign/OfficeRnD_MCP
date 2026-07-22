@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { buildConnectionTestRequestBody } from './auth.js';
 
 const SECRET_KEY_CLIENT_ID = 'officernd.clientId';
 const SECRET_KEY_CLIENT_SECRET = 'officernd.clientSecret';
@@ -91,22 +92,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
       try {
         statusBar.text = '$(sync~spin) OfficeRnD Testing...';
-        const testConfig = vscode.workspace.getConfiguration();
-        const testScopes = testConfig.get<string[]>(CONFIG_KEY_SCOPES, []);
-        const bodyParams: Record<string, string> = {
-          grant_type: 'client_credentials',
-          client_id: clientId,
-          client_secret: clientSecret,
-        };
-        if (testScopes.length > 0) {
-          bodyParams.scope = testScopes.join(' ');
-        }
-        const body = new URLSearchParams(bodyParams);
-
         const response = await fetch('https://identity.officernd.com/oauth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: body.toString(),
+          body: buildConnectionTestRequestBody(clientId, clientSecret),
         });
 
         if (response.ok) {

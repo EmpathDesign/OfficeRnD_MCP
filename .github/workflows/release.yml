@@ -39,6 +39,62 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Compute release version
+        id: release_version
+        run: |
+          BASE_VERSION=$(node -p "require('./packages/vscode/package.json').version.split('.').slice(0,2).join('.')")
+          RELEASE_VERSION="${BASE_VERSION}.${{ github.run_number }}"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp package versions
+        env:
+          RELEASE_VERSION: ${{ steps.release_version.outputs.version }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+
+          const version = process.env.RELEASE_VERSION;
+          const files = [
+            'package.json',
+            'packages/sdk/package.json',
+            'packages/core/package.json',
+            'packages/mcp/package.json',
+            'packages/vscode/package.json',
+          ];
+          const dependencySections = [
+            'dependencies',
+            'devDependencies',
+            'peerDependencies',
+            'optionalDependencies',
+          ];
+
+          for (const file of files) {
+            const filePath = path.join(process.cwd(), file);
+            const pkg = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+            if (file === 'package.json' || pkg.name?.startsWith('@officernd/') || pkg.name === 'officernd-mcp-vscode') {
+              pkg.version = version;
+            }
+
+            for (const section of dependencySections) {
+              const deps = pkg[section];
+              if (!deps) {
+                continue;
+              }
+
+              for (const name of Object.keys(deps)) {
+                if (name.startsWith('@officernd/')) {
+                  deps[name] = version;
+                }
+              }
+            }
+
+            fs.writeFileSync(filePath, `${JSON.stringify(pkg, null, 2)}\n`);
+          }
+          NODE
+
       - name: Pack MCP server
         run: |
           mkdir -p artifacts
@@ -53,10 +109,7 @@ jobs:
       - name: Pack VS Code extension
         run: |
           npm install -g @vscode/vsce
-          BASE_VERSION=$(node -p "require('./packages/vscode/package.json').version.split('.').slice(0,2).join('.')")
-          EXT_VERSION="${BASE_VERSION}.${{ github.run_number }}"
-          echo "Packaging VS Code extension version: $EXT_VERSION"
-          npm --prefix packages/vscode version "$EXT_VERSION" --no-git-tag-version
+          echo "Packaging VS Code extension version: ${{ steps.release_version.outputs.version }}"
           cd packages/vscode
           vsce package --no-dependencies --out ../../artifacts/
         working-directory: ${{ github.workspace }}
@@ -70,20 +123,13 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=v${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=v${VERSION}-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Release ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.release_version.outputs.tag }}
+          name: Release ${{ steps.release_version.outputs.tag }}
           body: |
-            ## OfficeRnD MCP Server ${{ steps.version.outputs.tag }}
+            ## OfficeRnD MCP Server ${{ steps.release_version.outputs.tag }}
 
             ### Packages
             - `@officernd/sdk` — OfficeRnD REST API SDK

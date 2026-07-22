@@ -1,0 +1,70 @@
+# === OfficeRnD MCP monorepo (.gitignore) ===
+# Tailored to a Node.js / TypeScript npm-workspaces monorepo
+# (packages/sdk, packages/core, packages/mcp, packages/vscode).
+# NOTE: package *source* under packages/ is tracked; only build
+# outputs and generated artifacts are ignored.
+
+# --- Dependencies ---
+node_modules/
+.pnp
+.pnp.js
+.pnp.cjs
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# --- Build output ---
+# Compiled TypeScript output emitted per workspace (packages/*/dist).
+packages/*/dist/
+dist/
+build/
+out/
+lib/
+*.tsbuildinfo
+packages/*/*.tsbuildinfo
+
+# --- Test / coverage output ---
+coverage/
+*.lcov
+.nyc_output/
+
+# --- Caches ---
+.cache/
+.eslintcache
+.npm/
+.turbo/
+.vite/
+.vitest/
+
+# --- Logs ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Editor / OS ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.swp
+*.swo
+
+# --- VS Code extension packaging output ---
+*.vsix
+
+# --- Package tarballs (npm pack / release artifacts) ---
+*.tgz
+artifacts/

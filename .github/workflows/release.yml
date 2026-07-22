@@ -53,13 +53,22 @@ jobs:
       - name: Pack VS Code extension
         run: |
           npm install -g @vscode/vsce
-          EXT_VERSION=$(node -e "const version=require('./packages/vscode/package.json').version; const [major, minor] = version.split('.'); console.log(major + '.' + minor + '.' + process.env.GITHUB_RUN_NUMBER);")
-          npm --prefix packages/vscode version "$EXT_VERSION" --no-git-tag-version
+          BASE_VERSION=$(node -p "require('./packages/vscode/package.json').version.split('.').slice(0,2).join('.')")
+          EXT_VERSION="${BASE_VERSION}.${{ github.run_number }}"
           echo "Packaging VS Code extension version: $EXT_VERSION"
+          npm --prefix packages/vscode version "$EXT_VERSION" --no-git-tag-version
           cd packages/vscode
           vsce package --no-dependencies --out ../../artifacts/
         working-directory: ${{ github.workspace }}
-        continue-on-error: true
+
+      - name: Publish VS Code extension to Marketplace
+        if: ${{ secrets.VSCE_PAT != '' }}
+        run: |
+          cd packages/vscode
+          vsce publish --no-dependencies --pat "$VSCE_PAT"
+        working-directory: ${{ github.workspace }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Get version
         id: version

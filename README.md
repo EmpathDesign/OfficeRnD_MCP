@@ -37,7 +37,7 @@ This monorepo provides everything needed to connect any MCP-compatible AI client
 | ----------------------------------------- | -------------------------------------------------------------------- |
 | [`@officernd/sdk`](packages/sdk)          | Reusable OfficeRnD REST API SDK — OAuth2, retries, pagination        |
 | [`@officernd/core`](packages/core)        | Business logic helpers — available rooms, expiring memberships, etc. |
-| [`@officernd/mcp`](packages/mcp)          | MCP server exposing 130+ tools over stdio                            |
+| [`@officernd/mcp`](packages/mcp)          | MCP server exposing 160+ tools over stdio                            |
 | [`officernd-mcp-vscode`](packages/vscode) | VS Code extension for credential management and MCP configuration    |
 
 ---
@@ -54,7 +54,7 @@ AI Client
 
 ┌─────────────────────────────────────────┐
 │           @officernd/mcp                │
-│  Tool Registry (130+ CRUD + business)   │
+│  Tool Registry (160+ CRUD + business)   │
 ├─────────────────────────────────────────┤
 │           @officernd/core               │
 │  Business helpers (rooms, members, …)  │
@@ -172,19 +172,49 @@ The server automatically generates tools from the resource registry. Every resou
 
 ### Supported Resources
 
-| Resource                      | Tools                                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Members                       | `list_members`, `get_member`, `count_members`, `create_member`, `update_member`, `delete_member`                         |
-| Companies                     | `list_companies`, `get_company`, `count_companies`, `create_company`, `update_company`, `delete_company`                 |
-| Teams                         | `list_teams`, `get_team`, `count_teams`, `create_team`, `update_team`, `delete_team`                                     |
-| Memberships                   | `list_memberships`, `get_membership`, `count_memberships`, `create_membership`, `update_membership`, `delete_membership` |
-| Bookings                      | `list_bookings`, `get_booking`, `count_bookings`, `create_booking`, `update_booking`, `delete_booking`                   |
-| Rooms                         | `list_rooms`, `get_room`, `count_rooms`, `create_room`, `update_room`, `delete_room`                                     |
-| Invoices                      | `list_invoices`, `get_invoice`, `count_invoices`, `create_invoice`, `update_invoice`, `delete_invoice`                   |
-| Visitors                      | `list_visitors`, `get_visitor`, `count_visitors`, `create_visitor`, `update_visitor`, `delete_visitor`                   |
-| Events                        | `list_events`, `get_event`, `count_events`, `create_event`, `update_event`, `delete_event`                               |
-| Locations                     | `list_locations`, `get_location`, `create_location`, `update_location`, `delete_location`                                |
-| … and 25+ more resource types |                                                                                                                          |
+| Resource                  | Tools                                                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Members                   | `list_members`, `get_member`, `count_members`, `create_member`, `update_member`, `delete_member`                                 |
+| Companies                 | `list_companies`, `get_company`, `count_companies`, `create_company`, `update_company`, `delete_company`                         |
+| Teams                     | `list_teams`, `get_team`, `count_teams`, `create_team`, `update_team`, `delete_team`                                             |
+| Memberships               | `list_memberships`, `get_membership`, `count_memberships`, `create_membership`, `update_membership`, `delete_membership`         |
+| Bookings                  | `list_bookings`, `get_booking`, `count_bookings`, `create_booking`, `update_booking`, `delete_booking`                           |
+| Rooms                     | `list_rooms`, `get_room`, `count_rooms`, `create_room`, `update_room`, `delete_room`                                             |
+| Desks                     | `list_desks`, `get_desk`, `count_desks`, `create_desk`, `update_desk`, `delete_desk`                                             |
+| Resource Types            | `list_resource_types`, `get_resource_type`, `create_resource_type`, `update_resource_type`, `delete_resource_type`               |
+| Locations                 | `list_locations`, `get_location`, `create_location`, `update_location`, `delete_location`                                        |
+| Floors                    | `list_floors`, `get_floor`, `create_floor`, `update_floor`, `delete_floor`                                                       |
+| Amenities                 | `list_amenities`, `get_amenity`, `create_amenity`, `update_amenity`, `delete_amenity`                                            |
+| Assignments               | `list_assignments`, `get_assignment`, `count_assignments`, `create_assignment`, `delete_assignment`                              |
+| Passes                    | `list_passes`, `get_pass`, `count_passes`, `create_pass`, `update_pass`, `delete_pass`                                           |
+| Coins                     | `list_coins`, `get_coin`, `count_coins`                                                                                          |
+| Credits                   | `list_credits`, `get_credit`, `create_credit`, `update_credit`, `delete_credit`                                                  |
+| Invoices                  | `list_invoices`, `get_invoice`, `count_invoices`, `create_invoice`, `update_invoice`, `delete_invoice`                           |
+| Payments                  | `list_payments`, `get_payment`, `count_payments`, `create_payment`, `update_payment`, `delete_payment`                           |
+| Charges                   | `list_charges`, `get_charge`, `count_charges`, `create_charge`, `update_charge`, `delete_charge`                                 |
+| Payment Details           | `list_payment_details`, `get_payment_detail`, `create_payment_detail`, `delete_payment_detail`                                   |
+| Tax Rates                 | `list_tax_rates`, `get_tax_rate`                                                                                                 |
+| Revenue Accounts          | `list_revenue_accounts`, `get_revenue_account`                                                                                   |
+| Resource Rates            | `list_resource_rates`, `get_resource_rate`                                                                                       |
+| Cancellation Policies     | `list_cancellation_policies`, `get_cancellation_policy`                                                                          |
+| Plans                     | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan`                                                            |
+| Visitors                  | `list_visitors`, `get_visitor`, `count_visitors`, `create_visitor`, `update_visitor`, `delete_visitor`                           |
+| Visits                    | `list_visits`, `get_visit`, `count_visits`, `create_visit`, `update_visit`, `delete_visit`                                       |
+| Events                    | `list_events`, `get_event`, `count_events`, `create_event`, `update_event`, `delete_event`                                       |
+| Tickets                   | `list_tickets`, `get_ticket`, `count_tickets`, `create_ticket`, `update_ticket`                                                  |
+| Ticket Options            | `list_ticket_options`, `get_ticket_option`                                                                                       |
+| Ticket Comments           | `list_ticket_comments`, `get_ticket_comment`, `create_ticket_comment`                                                            |
+| Posts                     | `list_posts`, `get_post`, `count_posts`, `create_post`, `delete_post`                                                            |
+| Benefits                  | `list_benefits`, `get_benefit`                                                                                                   |
+| Opportunities             | `list_opportunities`, `get_opportunity`, `count_opportunities`, `create_opportunity`, `update_opportunity`, `delete_opportunity` |
+| Opportunity Statuses      | `list_opportunity_statuses`, `get_opportunity_status`                                                                            |
+| Contracts                 | `list_contracts`, `get_contract`, `count_contracts`, `create_contract`, `update_contract`, `delete_contract`                     |
+| Check-ins                 | `list_checkins`, `get_checkin`, `count_checkins`, `create_checkin`, `update_checkin`, `delete_checkin`                           |
+| Fees                      | `list_fees`, `get_fee`, `create_fee`, `update_fee`, `delete_fee`                                                                 |
+| Reception Flows           | `list_reception_flows`, `get_reception_flow`                                                                                     |
+| Webhooks                  | `list_webhooks`, `get_webhook`, `create_webhook`, `update_webhook`, `delete_webhook`                                             |
+| Secondary Currencies      | `list_secondary_currencies`, `get_secondary_currency`, `update_secondary_currency`                                               |
+| … and more resource types |                                                                                                                                  |
 
 ### Business / AI Convenience Tools
 
@@ -318,15 +348,16 @@ The `officernd-mcp-vscode` extension provides a first-class developer experience
 
 ### Commands
 
-| Command                                 | Description                                        |
-| --------------------------------------- | -------------------------------------------------- |
-| `OfficeRnD: Configure Connection`       | Guided setup wizard for credentials                |
-| `OfficeRnD: Test Connection`            | Verify credentials and API connectivity            |
-| `OfficeRnD: Show Configuration`         | Display current config (secrets masked)            |
-| `OfficeRnD: Update Credentials`         | Update stored credentials                          |
-| `OfficeRnD: Clear Credentials`          | Remove all stored credentials                      |
-| `OfficeRnD: Generate MCP Configuration` | Write `.vscode/mcp.json` with env var placeholders |
-| `OfficeRnD: Open Logs`                  | Open the output channel for debug logs             |
+| Command                                 | Description                                                     |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `OfficeRnD: Configure Connection`       | Guided setup wizard for credentials                             |
+| `OfficeRnD: Test Connection`            | Verify credentials and API connectivity                         |
+| `OfficeRnD: Show Configuration`         | Display current config (secrets masked)                         |
+| `OfficeRnD: Update Credentials`         | Update stored credentials                                       |
+| `OfficeRnD: Clear Credentials`          | Remove all stored credentials                                   |
+| `OfficeRnD: Generate MCP Configuration` | Write `.vscode/mcp.json` with env var placeholders              |
+| `OfficeRnD: Open Logs`                  | Open the output channel for debug logs                          |
+| `OfficeRnD: Add All Scopes`             | Populate `officernd.scopes` with all available OfficeRnD scopes |
 
 ### Status Bar
 

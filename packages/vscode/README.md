@@ -45,6 +45,7 @@ Example generated configuration:
 - **OfficeRnD: Clear Credentials**
 - **OfficeRnD: Generate MCP Configuration**
 - **OfficeRnD: Open Logs**
+- **OfficeRnD: Add All Scopes** — Populates `officernd.scopes` in your settings with all available OfficeRnD Flex API scopes
 
 ## Authentication
 

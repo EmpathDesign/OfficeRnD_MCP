@@ -202,4 +202,111 @@ export const RESOURCES: ResourceDef[] = [
     description: 'Custom field definitions',
     operations: ['list', 'get', 'create', 'update', 'delete'],
   },
+  // Space resources
+  {
+    name: 'assignment',
+    path: '/assignments',
+    description: 'Space resource assignments (desks, offices, etc.) to members or companies',
+    operations: ['list', 'get', 'create', 'delete', 'count'],
+  },
+  {
+    name: 'pass',
+    path: '/passes',
+    description: 'Day passes and space access passes for members',
+    operations: ['list', 'get', 'create', 'update', 'delete', 'count'],
+  },
+  {
+    name: 'coin',
+    path: '/coins',
+    description: 'Virtual coins/credits used for space access and bookings',
+    operations: ['list', 'get', 'count'],
+  },
+  // Billing resources
+  {
+    name: 'charge',
+    path: '/charges',
+    description: 'Individual billing charges applied to members or companies',
+    operations: ['list', 'get', 'create', 'update', 'delete', 'count'],
+  },
+  {
+    name: 'tax_rate',
+    path: '/tax-rates',
+    description: 'Tax rates applied to invoices and charges',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'revenue_account',
+    path: '/revenue-accounts',
+    description: 'Revenue accounts used for accounting categorization',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'resource_rate',
+    path: '/resource-rates',
+    description: 'Pricing rates for bookable resources',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'cancellation_policy',
+    path: '/cancellation-policies',
+    description: 'Booking cancellation policies',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'payment_detail',
+    path: '/payment-details',
+    description: 'Saved payment method details for members',
+    operations: ['list', 'get', 'create', 'delete'],
+  },
+  // Collaboration resources
+  {
+    name: 'ticket',
+    path: '/tickets',
+    description: 'Support and helpdesk tickets',
+    operations: ['list', 'get', 'create', 'update', 'count'],
+  },
+  {
+    name: 'ticket_option',
+    path: '/ticket-options',
+    description: 'Ticket category and option definitions',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'ticket_comment',
+    path: '/ticket-comments',
+    description: 'Comments on support tickets',
+    operations: ['list', 'get', 'create'],
+  },
+  {
+    name: 'post',
+    path: '/posts',
+    description: 'Community posts and announcements',
+    operations: ['list', 'get', 'create', 'delete', 'count'],
+  },
+  {
+    name: 'benefit',
+    path: '/benefits',
+    description: 'Member benefits and perks',
+    operations: ['list', 'get'],
+  },
+  // Community resources
+  {
+    name: 'opportunity_status',
+    path: '/opportunity-statuses',
+    description: 'Status definitions for sales opportunities',
+    operations: ['list', 'get'],
+  },
+  {
+    name: 'reception_flow',
+    path: '/reception-flows',
+    description: 'Visitor reception flow configurations',
+    operations: ['list', 'get'],
+  },
+  // Settings resources
+  {
+    name: 'secondary_currency',
+    path: '/secondary-currencies',
+    description: 'Secondary currency configurations for multi-currency billing',
+    operations: ['list', 'get', 'update'],
+  },
 ];

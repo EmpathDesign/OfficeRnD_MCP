@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { buildConnectionTestRequestBody, normalizeScopes } from './auth.js';
+import { ALL_SCOPES } from './scopes.js';
 
 const SECRET_KEY_CLIENT_ID = 'officernd.clientId';
 const SECRET_KEY_CLIENT_SECRET = 'officernd.clientSecret';
@@ -219,6 +220,23 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand('officernd.openLogs', () => {
       outputChannel.show();
+    }),
+    vscode.commands.registerCommand('officernd.addAllScopes', async () => {
+      const confirm = await vscode.window.showWarningMessage(
+        `Add all ${ALL_SCOPES.length} OfficeRnD scopes to your configuration? This will replace the current scopes setting.`,
+        { modal: true },
+        'Add All Scopes',
+      );
+      if (confirm !== 'Add All Scopes') {
+        return;
+      }
+
+      const config = vscode.workspace.getConfiguration();
+      await config.update(CONFIG_KEY_SCOPES, [...ALL_SCOPES], vscode.ConfigurationTarget.Global);
+      outputChannel.appendLine(`Added all ${ALL_SCOPES.length} OfficeRnD scopes to configuration.`);
+      void vscode.window.showInformationMessage(
+        `All ${ALL_SCOPES.length} OfficeRnD scopes added to "officernd.scopes" in your settings.`,
+      );
     }),
   );
 }

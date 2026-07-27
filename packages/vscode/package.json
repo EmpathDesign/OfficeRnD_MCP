@@ -91,7 +91,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "OAuth2 scopes to request when authenticating. For the Flex API v2, use scopes like 'flex.community.members.read'. Leave empty to request all scopes available to your client."
+          "description": "OAuth2 scopes to request when authenticating. For the Flex API v2, use scopes like 'flex.community.members.read'. OfficeRnD requires at least one scope — leaving this empty will cause a token request failure."
         }
       }
     }

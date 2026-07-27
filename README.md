@@ -122,7 +122,7 @@ flex.space.bookings.create
 flex.billing.charges.read
 ```
 
-Your OfficeRnD OAuth2 application must be configured with the scopes you want the MCP server to use. If no scopes are specified, the server will request a token without a scope restriction, which grants all scopes configured on your client application.
+Your OfficeRnD OAuth2 application must be configured with the scopes you want the MCP server to use. You must specify at least one scope — OfficeRnD will reject token requests that do not include a scope. Configure the `OFFICERND_SCOPES` environment variable (space-separated list) for the MCP server, or set `officernd.scopes` in VS Code settings for the extension.
 
 The token endpoint is rate-limited to **5 requests per minute**. The SDK automatically caches tokens and reuses them until 60 seconds before expiry.
 
@@ -132,13 +132,14 @@ The token endpoint is rate-limited to **5 requests per minute**. The SDK automat
 
 Configure the server using environment variables:
 
-| Variable                  | Required    | Description                                           |
-| ------------------------- | ----------- | ----------------------------------------------------- |
-| `OFFICERND_CLIENT_ID`     | ✅          | Your OAuth2 Client ID                                 |
-| `OFFICERND_CLIENT_SECRET` | ✅          | Your OAuth2 Client Secret                             |
-| `OFFICERND_ORG`           | Recommended | Organization slug (subdomain)                         |
-| `OFFICERND_API_VERSION`   | No          | API version: `v2` (default) or `v1`                   |
-| `OFFICERND_LOG_LEVEL`     | No          | Log level: `debug`, `info` (default), `warn`, `error` |
+| Variable                  | Required    | Description                                                                                |
+| ------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| `OFFICERND_CLIENT_ID`     | ✅          | Your OAuth2 Client ID                                                                      |
+| `OFFICERND_CLIENT_SECRET` | ✅          | Your OAuth2 Client Secret                                                                  |
+| `OFFICERND_ORG`           | Recommended | Organization slug (subdomain)                                                              |
+| `OFFICERND_SCOPES`        | ✅          | Space-separated OAuth2 scopes (e.g. `flex.community.members.read`). Required by OfficeRnD. |
+| `OFFICERND_API_VERSION`   | No          | API version: `v2` (default) or `v1`                                                        |
+| `OFFICERND_LOG_LEVEL`     | No          | Log level: `debug`, `info` (default), `warn`, `error`                                      |
 
 ### Example
 
@@ -146,6 +147,7 @@ Configure the server using environment variables:
 export OFFICERND_CLIENT_ID="your_client_id"
 export OFFICERND_CLIENT_SECRET="your_client_secret"
 export OFFICERND_ORG="my-coworking-space"
+export OFFICERND_SCOPES="flex.community.members.read flex.space.bookings.read"
 officernd-mcp
 ```
 

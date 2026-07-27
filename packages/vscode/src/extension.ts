@@ -124,9 +124,17 @@ export function activate(context: vscode.ExtensionContext): void {
             outputChannel.appendLine(`Raw token endpoint response: ${errorText}`);
           }
           if (parsedErrorText.toLowerCase().includes('invalid scope')) {
-            outputChannel.appendLine(
-              'Scope troubleshooting: verify your OAuth2 app has the requested scopes, and update "officernd.scopes" in VS Code settings if needed.',
-            );
+            if (scopes.length === 0) {
+              outputChannel.appendLine(
+                'No scopes are configured. OfficeRnD requires at least one scope to be specified. ' +
+                  'Add scopes to "officernd.scopes" in VS Code settings (e.g. "flex.community.members.read") and retry the connection test.',
+              );
+            } else {
+              outputChannel.appendLine(
+                `Scope troubleshooting: the configured scopes (${scopes.join(', ')}) were rejected. ` +
+                  'Verify these scopes are enabled on your OfficeRnD OAuth2 application, or update "officernd.scopes" in VS Code settings.',
+              );
+            }
           }
           void vscode.window.showErrorMessage(`Connection failed: ${parsedErrorText}`);
         }

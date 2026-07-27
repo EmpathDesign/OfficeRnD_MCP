@@ -7,6 +7,8 @@ const clientId = process.env.OFFICERND_CLIENT_ID;
 const clientSecret = process.env.OFFICERND_CLIENT_SECRET;
 const organizationSlug = process.env.OFFICERND_ORG;
 const apiVersion = process.env.OFFICERND_API_VERSION as 'v1' | 'v2' | undefined;
+const scopesRaw = process.env.OFFICERND_SCOPES;
+const scopes = scopesRaw ? scopesRaw.split(/[,\s]+/).filter(Boolean) : undefined;
 
 if (!clientId || !clientSecret) {
   process.stderr.write(
@@ -20,6 +22,7 @@ const client = new OfficeRnDClient({
   clientSecret,
   organizationSlug,
   apiVersion: apiVersion ?? 'v2',
+  scopes,
 });
 
 const server = createServer(client);

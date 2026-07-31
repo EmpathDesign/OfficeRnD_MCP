@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { OfficeRnDClient, RESOURCES } from '@officernd/sdk';
+import type { OfficeRnDConfig } from '@officernd/sdk';
 import {
   activeMembers,
   findAvailableRooms,
@@ -49,8 +50,67 @@ function pluralize(name: string): string {
   return `${lower}s`;
 }
 
-export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
+const NOT_CONFIGURED_MESSAGE =
+  'OfficeRnD is not configured. Please call the configure_officernd tool first with your clientId and clientSecret.';
+
+export function buildTools(clientRef: { current: OfficeRnDClient | null }): ToolDefinition[] {
   const tools: ToolDefinition[] = [];
+
+  tools.push({
+    name: 'configure_officernd',
+    description:
+      'Configure the OfficeRnD connection with your OAuth2 credentials. Call this tool first if the server was started without environment variables set. After configuring, all other OfficeRnD tools will be available.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        clientId: {
+          type: 'string',
+          description: 'Your OfficeRnD OAuth2 Client ID',
+        },
+        clientSecret: {
+          type: 'string',
+          description: 'Your OfficeRnD OAuth2 Client Secret',
+        },
+        orgSlug: {
+          type: 'string',
+          description:
+            'Your organization slug (the subdomain in your OfficeRnD URL, e.g. "my-space" from "my-space.officernd.com")',
+        },
+        apiVersion: {
+          type: 'string',
+          description: 'API version to use: "v2" (default) or "v1"',
+        },
+        scopes: {
+          type: 'string',
+          description:
+            'Space-separated OAuth2 scopes (e.g. "flex.community.members.read flex.space.bookings.read")',
+        },
+        cacheDurationMinutes: {
+          type: 'number',
+          description:
+            'Token cache duration hint in minutes (token caching is managed automatically by the SDK)',
+        },
+      },
+      required: ['clientId', 'clientSecret'],
+    },
+    handler: async (args) => {
+      const config: OfficeRnDConfig = {
+        clientId: String(args.clientId),
+        clientSecret: String(args.clientSecret),
+        organizationSlug: args.orgSlug ? String(args.orgSlug) : undefined,
+        apiVersion: args.apiVersion === 'v1' || args.apiVersion === 'v2' ? args.apiVersion : 'v2',
+        scopes:
+          typeof args.scopes === 'string' && args.scopes.trim()
+            ? args.scopes.trim().split(/\s+/)
+            : undefined,
+      };
+      clientRef.current = new OfficeRnDClient(config);
+      return {
+        success: true,
+        message: `OfficeRnD configured successfully${config.organizationSlug ? ` for organization "${config.organizationSlug}"` : ''}. You can now use all OfficeRnD tools.`,
+      };
+    },
+  });
 
   for (const resource of RESOURCES) {
     const plural = pluralize(resource.name);
@@ -75,6 +135,8 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           },
         },
         handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
           const params: Record<string, string | number | boolean | undefined> = {};
           if (args.filters && typeof args.filters === 'object') {
             Object.assign(
@@ -101,7 +163,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           },
           required: ['id'],
         },
-        handler: async (args) => client.get(resourcePath, String(args.id)),
+        handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+          return client.get(resourcePath, String(args.id));
+        },
       });
     }
 
@@ -120,6 +186,8 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           },
         },
         handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
           const params: Record<string, string | number | boolean | undefined> = {};
           if (args.filters && typeof args.filters === 'object') {
             Object.assign(
@@ -148,7 +216,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           },
           required: ['data'],
         },
-        handler: async (args) => client.create(resourcePath, args.data),
+        handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+          return client.create(resourcePath, args.data);
+        },
       });
     }
 
@@ -168,7 +240,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           },
           required: ['id', 'data'],
         },
-        handler: async (args) => client.update(resourcePath, String(args.id), args.data),
+        handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+          return client.update(resourcePath, String(args.id), args.data);
+        },
       });
     }
 
@@ -184,6 +260,8 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           required: ['id'],
         },
         handler: async (args) => {
+          const client = clientRef.current;
+          if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
           await client.delete(resourcePath, String(args.id));
           return { success: true };
         },
@@ -212,13 +290,16 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
         },
         required: ['start', 'end'],
       },
-      handler: async (args) =>
-        findAvailableRooms(client, {
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return findAvailableRooms(client, {
           start: String(args.start),
           end: String(args.end),
           locationId: args.locationId ? String(args.locationId) : undefined,
           capacity: typeof args.capacity === 'number' ? args.capacity : undefined,
-        }),
+        });
+      },
     },
     {
       name: 'find_memberships_expiring_soon',
@@ -233,12 +314,15 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           locationId: { type: 'string', description: 'Optional location/office ID' },
         },
       },
-      handler: async (args) =>
-        membershipsExpiringSoon(client, {
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return membershipsExpiringSoon(client, {
           daysUntilExpiry:
             typeof args.daysUntilExpiry === 'number' ? args.daysUntilExpiry : undefined,
           locationId: args.locationId ? String(args.locationId) : undefined,
-        }),
+        });
+      },
     },
     {
       name: 'get_todays_visitors',
@@ -249,8 +333,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           locationId: { type: 'string', description: 'Optional location/office ID' },
         },
       },
-      handler: async (args) =>
-        todaysVisitors(client, args.locationId ? String(args.locationId) : undefined),
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return todaysVisitors(client, args.locationId ? String(args.locationId) : undefined);
+      },
     },
     {
       name: 'get_todays_bookings',
@@ -261,8 +348,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           locationId: { type: 'string', description: 'Optional location/office ID' },
         },
       },
-      handler: async (args) =>
-        todaysBookings(client, args.locationId ? String(args.locationId) : undefined),
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return todaysBookings(client, args.locationId ? String(args.locationId) : undefined);
+      },
     },
     {
       name: 'get_unpaid_invoices',
@@ -273,8 +363,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           locationId: { type: 'string', description: 'Optional location/office ID' },
         },
       },
-      handler: async (args) =>
-        unpaidInvoices(client, args.locationId ? String(args.locationId) : undefined),
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return unpaidInvoices(client, args.locationId ? String(args.locationId) : undefined);
+      },
     },
     {
       name: 'get_members_by_company',
@@ -286,7 +379,11 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
         },
         required: ['companyId'],
       },
-      handler: async (args) => membersByCompany(client, String(args.companyId)),
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return membersByCompany(client, String(args.companyId));
+      },
     },
     {
       name: 'get_active_members',
@@ -297,21 +394,25 @@ export function buildTools(client: OfficeRnDClient): ToolDefinition[] {
           locationId: { type: 'string', description: 'Optional location/office ID' },
         },
       },
-      handler: async (args) =>
-        activeMembers(client, args.locationId ? String(args.locationId) : undefined),
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return activeMembers(client, args.locationId ? String(args.locationId) : undefined);
+      },
     },
   );
 
   return tools;
 }
 
-export function createServer(client: OfficeRnDClient): Server {
+export function createServer(initialClient: OfficeRnDClient | null = null): Server {
   const server = new Server(
     { name: 'officernd-mcp', version: '0.1.0' },
     { capabilities: { tools: {} } },
   );
 
-  const tools = buildTools(client);
+  const clientRef = { current: initialClient };
+  const tools = buildTools(clientRef);
   const toolMap = new Map(tools.map((tool) => [tool.name, tool]));
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({

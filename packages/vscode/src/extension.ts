@@ -147,23 +147,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
     vscode.commands.registerCommand('officernd.showConfig', async () => {
-      const clientId = await context.secrets.get(SECRET_KEY_CLIENT_ID);
-      const clientSecret = await context.secrets.get(SECRET_KEY_CLIENT_SECRET);
-      const config = vscode.workspace.getConfiguration();
-      const orgSlug = config.get<string>(CONFIG_KEY_ORG_SLUG, '(not set)');
-      const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v2');
-      const scopes = config.get<string[]>(CONFIG_KEY_SCOPES, []);
-
-      const message = [
-        'OfficeRnD Configuration:',
-        `  Client ID: ${clientId ? `***${clientId.slice(-4)}` : '(not set)'}`,
-        `  Client Secret: ${clientSecret ? '••••••••' : '(not set)'}`,
-        `  Organization: ${orgSlug}`,
-        `  API Version: ${apiVersion}`,
-        `  Scopes: ${scopes.length > 0 ? scopes.join(', ') : '(all available)'}`,
-      ].join('\n');
-
-      void vscode.window.showInformationMessage(message, { modal: true });
+      await vscode.commands.executeCommand('officerndStatus.focus');
     }),
     vscode.commands.registerCommand('officernd.updateCredentials', async () => {
       await vscode.commands.executeCommand('officernd.configure');
@@ -239,6 +223,18 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }),
   );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (
+        e.affectsConfiguration(CONFIG_KEY_ORG_SLUG) ||
+        e.affectsConfiguration(CONFIG_KEY_API_VERSION) ||
+        e.affectsConfiguration(CONFIG_KEY_SCOPES)
+      ) {
+        treeProvider.refresh();
+      }
+    }),
+  );
 }
 
 export function deactivate(): void {
@@ -266,9 +262,22 @@ function parseTokenEndpointError(errorText: string): string {
   return errorText || 'Unknown token endpoint error';
 }
 
-class OfficeRnDTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+class OfficeRnDTreeItem extends vscode.TreeItem {
+  readonly children: OfficeRnDTreeItem[];
+
+  constructor(
+    label: string,
+    collapsibleState: vscode.TreeItemCollapsibleState,
+    children: OfficeRnDTreeItem[] = [],
+  ) {
+    super(label, collapsibleState);
+    this.children = children;
+  }
+}
+
+class OfficeRnDTreeProvider implements vscode.TreeDataProvider<OfficeRnDTreeItem> {
   private readonly onDidChangeTreeDataEmitter = new vscode.EventEmitter<
-    vscode.TreeItem | undefined | null | void
+    OfficeRnDTreeItem | undefined | null | void
   >();
 
   readonly onDidChangeTreeData = this.onDidChangeTreeDataEmitter.event;
@@ -279,22 +288,63 @@ class OfficeRnDTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
     this.onDidChangeTreeDataEmitter.fire();
   }
 
-  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+  getTreeItem(element: OfficeRnDTreeItem): vscode.TreeItem {
     return element;
   }
 
-  async getChildren(): Promise<vscode.TreeItem[]> {
-    const clientId = await this.secrets.get(SECRET_KEY_CLIENT_ID);
-    if (clientId) {
-      return [
-        new vscode.TreeItem('Status: Connected', vscode.TreeItemCollapsibleState.None),
-        new vscode.TreeItem(
-          `Client ID: ***${clientId.slice(-4)}`,
-          vscode.TreeItemCollapsibleState.None,
-        ),
-      ];
+  async getChildren(element?: OfficeRnDTreeItem): Promise<OfficeRnDTreeItem[]> {
+    if (element) {
+      return element.children;
     }
 
-    return [new vscode.TreeItem('Status: Not configured', vscode.TreeItemCollapsibleState.None)];
+    const clientId = await this.secrets.get(SECRET_KEY_CLIENT_ID);
+    if (!clientId) {
+      const notConfigured = new OfficeRnDTreeItem(
+        'Not Configured',
+        vscode.TreeItemCollapsibleState.None,
+      );
+      notConfigured.description = 'Run "OfficeRnD: Configure Connection"';
+      notConfigured.iconPath = new vscode.ThemeIcon('warning');
+      return [notConfigured];
+    }
+
+    const config = vscode.workspace.getConfiguration();
+    const orgSlug = config.get<string>(CONFIG_KEY_ORG_SLUG, '');
+    const apiVersion = config.get<string>(CONFIG_KEY_API_VERSION, 'v2');
+    const rawScopes = config.get<string[]>(CONFIG_KEY_SCOPES, []);
+    const scopes = normalizeScopes(rawScopes);
+
+    const statusItem = new OfficeRnDTreeItem('Connected', vscode.TreeItemCollapsibleState.None);
+    statusItem.iconPath = new vscode.ThemeIcon('check');
+
+    const clientIdItem = new OfficeRnDTreeItem('Client ID', vscode.TreeItemCollapsibleState.None);
+    clientIdItem.description = `***${clientId.slice(-4)}`;
+
+    const orgItem = new OfficeRnDTreeItem('Organization', vscode.TreeItemCollapsibleState.None);
+    orgItem.description = orgSlug || '(not set)';
+
+    const apiVersionItem = new OfficeRnDTreeItem(
+      'API Version',
+      vscode.TreeItemCollapsibleState.None,
+    );
+    apiVersionItem.description = apiVersion;
+
+    const scopeItems = scopes.map((scope) => {
+      const item = new OfficeRnDTreeItem(scope, vscode.TreeItemCollapsibleState.None);
+      item.iconPath = new vscode.ThemeIcon('key');
+      return item;
+    });
+
+    const scopesItem = new OfficeRnDTreeItem(
+      'Scopes',
+      scopes.length > 0
+        ? vscode.TreeItemCollapsibleState.Collapsed
+        : vscode.TreeItemCollapsibleState.None,
+      scopeItems,
+    );
+    scopesItem.description = scopes.length > 0 ? `${scopes.length} configured` : '(all available)';
+    scopesItem.iconPath = new vscode.ThemeIcon('symbol-key');
+
+    return [statusItem, clientIdItem, orgItem, apiVersionItem, scopesItem];
   }
 }

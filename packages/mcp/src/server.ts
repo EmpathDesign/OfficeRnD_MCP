@@ -6,6 +6,10 @@ import {
   activeMembers,
   findAvailableRooms,
   getInventory,
+  getMemberBillingSummary,
+  getMembershipOfferings,
+  getPricingCatalog,
+  listResourceRatesForResource,
   membersByCompany,
   membershipsExpiringSoon,
   todaysBookings,
@@ -481,6 +485,75 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
         const client = clientRef.current;
         if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
         return client.http.post('/checkout', args.data);
+      },
+    },
+    {
+      name: 'get_pricing_catalog',
+      description:
+        'Get a consolidated pricing catalog (plans, products, addons, resource rates, and price lists) in a single response. Ideal for comparing website pricing with OfficeRnD-managed pricing.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          locationId: { type: 'string', description: 'Optional location/office ID to filter by' },
+        },
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return getPricingCatalog(client, args.locationId ? String(args.locationId) : undefined);
+      },
+    },
+    {
+      name: 'get_membership_offerings',
+      description:
+        'Get customer-facing membership offerings (plans, passes, and addons) that can be surfaced on a signup or pricing page. Optionally scoped to a location.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          locationId: { type: 'string', description: 'Optional location/office ID to filter by' },
+        },
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return getMembershipOfferings(
+          client,
+          args.locationId ? String(args.locationId) : undefined,
+        );
+      },
+    },
+    {
+      name: 'get_member_billing_summary',
+      description:
+        'Get a consolidated billing summary for a single member: their memberships, contracts, invoices, charges, payments and fees. Useful for customer support and account audits without issuing separate list calls.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          memberId: { type: 'string', description: 'The member ID' },
+        },
+        required: ['memberId'],
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return getMemberBillingSummary(client, String(args.memberId));
+      },
+    },
+    {
+      name: 'list_resource_rates_for_resource',
+      description:
+        'List the resource rates that apply to a specific bookable resource (GET /resource-rates?resource={resourceId}). Wraps the correct filter parameter to avoid the backend validation error some accounts hit when calling /resource-rates unfiltered.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          resourceId: { type: 'string', description: 'The resource ID to list rates for' },
+        },
+        required: ['resourceId'],
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return listResourceRatesForResource(client, String(args.resourceId));
       },
     },
     {

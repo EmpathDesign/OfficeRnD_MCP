@@ -205,7 +205,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
     if (resource.operations.includes('create')) {
       tools.push({
         name: `create_${resource.name}`,
-        description: `Create a new ${resource.name}. ${resource.description}`,
+        description: `[WRITE] Create a new ${resource.name} in OfficeRnD. ${resource.description}. This tool writes data to OfficeRnD.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -228,7 +228,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
     if (resource.operations.includes('update')) {
       tools.push({
         name: `update_${resource.name}`,
-        description: `Update an existing ${resource.name}. ${resource.description}`,
+        description: `[WRITE] Update an existing ${resource.name} in OfficeRnD. ${resource.description}. This tool writes data to OfficeRnD.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -252,7 +252,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
     if (resource.operations.includes('delete')) {
       tools.push({
         name: `delete_${resource.name}`,
-        description: `Delete a ${resource.name} by ID. ${resource.description}`,
+        description: `[WRITE] Delete a ${resource.name} from OfficeRnD by ID. ${resource.description}. This tool permanently removes the record.`,
         inputSchema: {
           type: 'object',
           properties: {
@@ -465,7 +465,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
     {
       name: 'execute_checkout',
       description:
-        'Execute a checkout (POST /checkout) to finalize a plan, membership, or booking purchase, including billing and payment. This is a write operation — prefer preview_checkout first to confirm pricing.',
+        '[WRITE] Execute a checkout (POST /checkout) to finalize a plan, membership, or booking purchase, including billing and payment. This tool writes data to OfficeRnD — prefer preview_checkout first to confirm pricing.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -486,18 +486,49 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
     {
       name: 'health_check',
       description:
-        'Check whether the OfficeRnD MCP server is configured and can reach the OfficeRnD API. Returns configuration status and, if configured, verifies connectivity with a lightweight request.',
+        'Check whether the OfficeRnD MCP server is configured and can reach the OfficeRnD API. Returns configuration status, connectivity result, and a full capabilities summary listing all read and write tools available.',
       inputSchema: {
         type: 'object',
         properties: {},
       },
       handler: async () => {
         const client = clientRef.current;
+
+        const readTools = tools
+          .filter(
+            (t) =>
+              t.name.startsWith('list_') ||
+              t.name.startsWith('get_') ||
+              t.name.startsWith('count_') ||
+              t.name.startsWith('find_') ||
+              t.name === 'preview_checkout' ||
+              t.name === 'health_check',
+          )
+          .map((t) => t.name);
+
+        const writeTools = tools
+          .filter(
+            (t) =>
+              t.name.startsWith('create_') ||
+              t.name.startsWith('update_') ||
+              t.name.startsWith('delete_') ||
+              t.name === 'execute_checkout',
+          )
+          .map((t) => t.name);
+
+        const capabilities = {
+          totalTools: tools.length,
+          readTools: { count: readTools.length, tools: readTools },
+          writeTools: { count: writeTools.length, tools: writeTools },
+          note: 'This MCP server supports full CRUD operations. Use [WRITE] tools to create, update, and delete records in OfficeRnD.',
+        };
+
         if (!client) {
           return {
             configured: false,
             connected: false,
             message: NOT_CONFIGURED_MESSAGE,
+            capabilities,
           };
         }
         try {
@@ -508,6 +539,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
             organizationSlug: client.config.organizationSlug,
             apiVersion: client.config.apiVersion,
             message: 'OfficeRnD connection is healthy.',
+            capabilities,
           };
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
@@ -517,6 +549,7 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
             organizationSlug: client.config.organizationSlug,
             apiVersion: client.config.apiVersion,
             message: `OfficeRnD is configured but a test request failed: ${message}`,
+            capabilities,
           };
         }
       },

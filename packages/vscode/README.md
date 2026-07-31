@@ -9,6 +9,17 @@ VS Code extension for configuring the OfficeRnD MCP server.
 - Generates a workspace `.vscode/mcp.json` file for MCP clients
 - Shows connection status and quick commands inside VS Code
 
+## MCP server capabilities
+
+The OfficeRnD MCP server this extension configures supports **full CRUD operations** — it is not limited to read-only access. Your AI assistant can:
+
+- **Read** — list, get, count, and search any OfficeRnD resource
+- **Create** — add new members, bookings, visitors, invoices, and more
+- **Update** — modify existing records
+- **Delete** — remove records from OfficeRnD
+
+Write tools are prefixed with `[WRITE]` in their descriptions so your AI can identify them at a glance. Ask your assistant to call `health_check` for a live listing of all available read and write tools.
+
 ## Quick start
 
 1. Install the **OfficeRnD MCP** extension.

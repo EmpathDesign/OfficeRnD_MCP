@@ -5,12 +5,15 @@ A production-ready **Model Context Protocol (MCP) server** that exposes the comp
 [![CI](https://github.com/EmpathDesign/OfficeRnD_MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/EmpathDesign/OfficeRnD_MCP/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> **⚡ Full CRUD — not read-only.** This server supports **create, update, and delete** operations across all OfficeRnD resources in addition to reads. Ask your AI assistant to create bookings, update members, delete invoices, or perform any other write operation. Write tools are prefixed with `[WRITE]` in their descriptions. Call `health_check` to get a full list of available read and write tools at any time.
+
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Capabilities at a Glance](#capabilities-at-a-glance)
 - [Installation](#installation)
 - [Authentication](#authentication)
 - [Configuration](#configuration)
@@ -71,6 +74,26 @@ AI Client
 ```
 
 The SDK has **no MCP dependency**, making it reusable in non-MCP contexts.
+
+---
+
+## Capabilities at a Glance
+
+This server is **fully mutation-capable** — it is not limited to read operations.
+
+| Operation type | Tool prefix   | Example                                       |
+| -------------- | ------------- | --------------------------------------------- |
+| Read (list)    | `list_`       | `list_members`, `list_bookings`               |
+| Read (single)  | `get_`        | `get_member`, `get_booking`                   |
+| Read (count)   | `count_`      | `count_members`, `count_bookings`             |
+| **Write**      | **`create_`** | **`create_booking`**, **`create_member`**     |
+| **Write**      | **`update_`** | **`update_booking`**, **`update_member`**     |
+| **Write**      | **`delete_`** | **`delete_booking`**, **`delete_member`**     |
+| Business       | various       | `find_available_rooms`, `execute_checkout`, … |
+
+Write tools are prefixed with `[WRITE]` in their MCP tool descriptions so that AI agents can identify them at a glance.
+
+Call `health_check` at any time to receive a live JSON summary of every available tool, separated into `readTools` and `writeTools` lists.
 
 ---
 
@@ -269,6 +292,27 @@ The server automatically generates tools from the resource registry. Every resou
 
 "Is the OfficeRnD connection working?"
 → health_check
+
+"Book the downtown conference room for tomorrow at 2pm for 2 hours"
+→ create_booking with resourceId, start, end
+
+"Cancel John's booking"
+→ delete_booking with id
+
+"Update the member's email address"
+→ update_member with id and data
+
+"Add a new member named Jane Smith"
+→ create_member with data
+
+"Create a visitor pass for next Monday"
+→ create_visitor with data
+
+"Finalize the checkout for this member's plan"
+→ execute_checkout with data
+
+"What write operations can this server perform?"
+→ health_check — returns writeTools list with all available mutation tools
 ```
 
 ---

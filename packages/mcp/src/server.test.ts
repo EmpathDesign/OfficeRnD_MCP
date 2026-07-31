@@ -10,6 +10,11 @@ function createMockClient() {
     create: vi.fn().mockResolvedValue({ id: '1', created: true }),
     update: vi.fn().mockResolvedValue({ id: '1', updated: true }),
     delete: vi.fn().mockResolvedValue(undefined),
+    config: { organizationSlug: 'my-org', apiVersion: 'v2' },
+    http: {
+      get: vi.fn().mockResolvedValue({ total: 100, fees: [] }),
+      post: vi.fn().mockResolvedValue({ id: 'checkout-1', status: 'completed' }),
+    },
   };
 }
 
@@ -184,6 +189,92 @@ describe('createServer', () => {
     expect(client.list).toHaveBeenCalledWith('/resources', { officeId: 'office-1' });
     expect(client.list).toHaveBeenCalledWith('/resource-types', { officeId: 'office-1' });
     expect(client.list).toHaveBeenCalledWith('/resource-rates', { officeId: 'office-1' });
+  });
+
+  it('get_resource_rate_cancellation_policy calls client.get with the nested path', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_resource_rate_cancellation_policy',
+    );
+
+    await tool?.handler({ resourceRateId: 'rate-1' });
+
+    expect(client.get).toHaveBeenCalledWith('/resource-rates/rate-1', 'cancellation-policy');
+  });
+
+  it('preview_checkout calls client.http.get with /checkout/summary', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'preview_checkout',
+    );
+
+    const result = await tool?.handler({ filters: { memberId: 'member-1', planId: 'plan-1' } });
+
+    expect(client.http.get).toHaveBeenCalledWith('/checkout/summary', {
+      memberId: 'member-1',
+      planId: 'plan-1',
+    });
+    expect(result).toEqual({ total: 100, fees: [] });
+  });
+
+  it('execute_checkout calls client.http.post with /checkout', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'execute_checkout',
+    );
+
+    const result = await tool?.handler({ data: { memberId: 'member-1', planId: 'plan-1' } });
+
+    expect(client.http.post).toHaveBeenCalledWith('/checkout', {
+      memberId: 'member-1',
+      planId: 'plan-1',
+    });
+    expect(result).toEqual({ id: 'checkout-1', status: 'completed' });
+  });
+
+  it('health_check reports not configured when client is null', async () => {
+    const tool = buildTools({ current: null }).find((entry) => entry.name === 'health_check');
+
+    const result = (await tool?.handler({})) as { configured: boolean; connected: boolean };
+
+    expect(result.configured).toBe(false);
+    expect(result.connected).toBe(false);
+  });
+
+  it('health_check reports connected when configured client succeeds', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'health_check',
+    );
+
+    const result = (await tool?.handler({})) as {
+      configured: boolean;
+      connected: boolean;
+      organizationSlug: string;
+    };
+
+    expect(client.list).toHaveBeenCalledWith('/resource-types', { $limit: 1 });
+    expect(result.configured).toBe(true);
+    expect(result.connected).toBe(true);
+    expect(result.organizationSlug).toBe('my-org');
+  });
+
+  it('health_check reports disconnected when the test request fails', async () => {
+    const client = createMockClient();
+    client.list.mockRejectedValueOnce(new Error('network error'));
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'health_check',
+    );
+
+    const result = (await tool?.handler({})) as {
+      configured: boolean;
+      connected: boolean;
+      message: string;
+    };
+
+    expect(result.configured).toBe(true);
+    expect(result.connected).toBe(false);
+    expect(result.message).toContain('network error');
   });
 
   it('unknown tool returns isError true', async () => {

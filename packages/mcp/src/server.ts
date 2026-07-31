@@ -417,6 +417,110 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
         return getInventory(client, args.locationId ? String(args.locationId) : undefined);
       },
     },
+    {
+      name: 'get_resource_rate_cancellation_policy',
+      description:
+        'Get the cancellation policy linked to a specific resource rate (GET /resource-rates/{id}/cancellation-policy). Useful for surfacing booking cancellation terms alongside pricing.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          resourceRateId: { type: 'string', description: 'The resource rate ID' },
+        },
+        required: ['resourceRateId'],
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return client.get(`/resource-rates/${String(args.resourceRateId)}`, 'cancellation-policy');
+      },
+    },
+    {
+      name: 'preview_checkout',
+      description:
+        'Preview a checkout (GET /checkout/summary) to see pricing, fees, taxes, and proration before committing to a plan, membership, or booking purchase. Read-only — makes no changes.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          filters: {
+            type: 'object',
+            description:
+              'Checkout summary query parameters, e.g. memberId, planId, resourceId, startDate',
+            additionalProperties: true,
+          },
+        },
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        const params: Record<string, string | number | boolean | undefined> = {};
+        if (args.filters && typeof args.filters === 'object') {
+          Object.assign(
+            params,
+            args.filters as Record<string, string | number | boolean | undefined>,
+          );
+        }
+        return client.http.get('/checkout/summary', params);
+      },
+    },
+    {
+      name: 'execute_checkout',
+      description:
+        'Execute a checkout (POST /checkout) to finalize a plan, membership, or booking purchase, including billing and payment. This is a write operation — prefer preview_checkout first to confirm pricing.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          data: {
+            type: 'object',
+            description: 'The checkout payload (member, plan/resource selection, payment details)',
+            additionalProperties: true,
+          },
+        },
+        required: ['data'],
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return client.http.post('/checkout', args.data);
+      },
+    },
+    {
+      name: 'health_check',
+      description:
+        'Check whether the OfficeRnD MCP server is configured and can reach the OfficeRnD API. Returns configuration status and, if configured, verifies connectivity with a lightweight request.',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+      handler: async () => {
+        const client = clientRef.current;
+        if (!client) {
+          return {
+            configured: false,
+            connected: false,
+            message: NOT_CONFIGURED_MESSAGE,
+          };
+        }
+        try {
+          await client.list('/resource-types', { $limit: 1 });
+          return {
+            configured: true,
+            connected: true,
+            organizationSlug: client.config.organizationSlug,
+            apiVersion: client.config.apiVersion,
+            message: 'OfficeRnD connection is healthy.',
+          };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          return {
+            configured: true,
+            connected: false,
+            organizationSlug: client.config.organizationSlug,
+            apiVersion: client.config.apiVersion,
+            message: `OfficeRnD is configured but a test request failed: ${message}`,
+          };
+        }
+      },
+    },
   );
 
   return tools;

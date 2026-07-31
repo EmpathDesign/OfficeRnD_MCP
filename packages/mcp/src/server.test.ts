@@ -338,6 +338,132 @@ describe('createServer', () => {
     }
   });
 
+  it('get_pricing_catalog calls client.list for plans, products, addons, resource-rates, price-lists', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_pricing_catalog',
+    );
+
+    const result = (await tool?.handler({})) as {
+      plans: unknown[];
+      products: unknown[];
+      addons: unknown[];
+      resourceRates: unknown[];
+      priceLists: unknown[];
+    };
+
+    expect(client.list).toHaveBeenCalledWith('/plans', {});
+    expect(client.list).toHaveBeenCalledWith('/products', {});
+    expect(client.list).toHaveBeenCalledWith('/addons', {});
+    expect(client.list).toHaveBeenCalledWith('/resource-rates', {});
+    expect(client.list).toHaveBeenCalledWith('/price-lists', {});
+    expect(result).toHaveProperty('plans');
+    expect(result).toHaveProperty('products');
+    expect(result).toHaveProperty('addons');
+    expect(result).toHaveProperty('resourceRates');
+    expect(result).toHaveProperty('priceLists');
+  });
+
+  it('get_pricing_catalog passes locationId filter when provided', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_pricing_catalog',
+    );
+
+    await tool?.handler({ locationId: 'office-1' });
+
+    expect(client.list).toHaveBeenCalledWith('/plans', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/products', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/addons', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/resource-rates', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/price-lists', { officeId: 'office-1' });
+  });
+
+  it('get_membership_offerings calls client.list for plans, passes, and addons', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_membership_offerings',
+    );
+
+    const result = (await tool?.handler({})) as {
+      plans: unknown[];
+      passes: unknown[];
+      addons: unknown[];
+    };
+
+    expect(client.list).toHaveBeenCalledWith('/plans', {});
+    expect(client.list).toHaveBeenCalledWith('/passes', {});
+    expect(client.list).toHaveBeenCalledWith('/addons', {});
+    expect(result).toHaveProperty('plans');
+    expect(result).toHaveProperty('passes');
+    expect(result).toHaveProperty('addons');
+  });
+
+  it('get_member_billing_summary calls client.list for memberships, contracts, invoices, charges, payments, fees', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_member_billing_summary',
+    );
+
+    const result = (await tool?.handler({ memberId: 'member-1' })) as {
+      memberships: unknown[];
+      contracts: unknown[];
+      invoices: unknown[];
+      charges: unknown[];
+      payments: unknown[];
+      fees: unknown[];
+    };
+
+    expect(client.list).toHaveBeenCalledWith('/memberships', { member: 'member-1' });
+    expect(client.list).toHaveBeenCalledWith('/contracts', { member: 'member-1' });
+    expect(client.list).toHaveBeenCalledWith('/invoices', { member: 'member-1' });
+    expect(client.list).toHaveBeenCalledWith('/charges', { member: 'member-1' });
+    expect(client.list).toHaveBeenCalledWith('/payments', { member: 'member-1' });
+    expect(client.list).toHaveBeenCalledWith('/fees', { member: 'member-1' });
+    expect(result).toHaveProperty('memberships');
+    expect(result).toHaveProperty('invoices');
+    expect(result).toHaveProperty('fees');
+  });
+
+  it('list_resource_rates_for_resource calls client.list with resource filter', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'list_resource_rates_for_resource',
+    );
+
+    await tool?.handler({ resourceId: 'resource-1' });
+
+    expect(client.list).toHaveBeenCalledWith('/resource-rates', { resource: 'resource-1' });
+  });
+
+  it('workflow helper tools are registered and categorized as read tools in health_check', async () => {
+    const client = createMockClient();
+    const tools = buildTools({ current: client as never });
+    const toolNames = tools.map((tool) => tool.name);
+
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        'get_pricing_catalog',
+        'get_membership_offerings',
+        'get_member_billing_summary',
+        'list_resource_rates_for_resource',
+      ]),
+    );
+
+    const healthCheck = tools.find((t) => t.name === 'health_check');
+    const result = (await healthCheck?.handler({})) as {
+      capabilities: { readTools: { tools: string[] } };
+    };
+    expect(result.capabilities.readTools.tools).toEqual(
+      expect.arrayContaining([
+        'get_pricing_catalog',
+        'get_membership_offerings',
+        'get_member_billing_summary',
+        'list_resource_rates_for_resource',
+      ]),
+    );
+  });
+
   it('unknown tool returns isError true', async () => {
     const client = createMockClient();
     const server = createServer(client as never);

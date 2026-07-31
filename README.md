@@ -242,19 +242,23 @@ The server automatically generates tools from the resource registry. Every resou
 
 ### Business / AI Convenience Tools
 
-| Tool                                    | Description                                                                               |
-| --------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `find_available_rooms`                  | Find available meeting rooms for a time range                                             |
-| `find_memberships_expiring_soon`        | Find memberships expiring within N days                                                   |
-| `get_todays_visitors`                   | Get all visitors for today                                                                |
-| `get_todays_bookings`                   | Get all room bookings for today                                                           |
-| `get_unpaid_invoices`                   | Get all outstanding invoices                                                              |
-| `get_members_by_company`                | Get all members from a company                                                            |
-| `get_active_members`                    | Get all currently active members                                                          |
-| `get_inventory`                         | Get a consolidated inventory of resources, resource types, and rates in a single response |
-| `get_resource_rate_cancellation_policy` | Get the cancellation policy linked to a specific resource rate                            |
-| `preview_checkout`                      | Preview pricing, fees, and taxes for a checkout without committing to it (read-only)      |
-| `execute_checkout`                      | Finalize a plan/membership/booking checkout, including billing (write operation)          |
+| Tool                                    | Description                                                                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `find_available_rooms`                  | Find available meeting rooms for a time range                                                                                        |
+| `find_memberships_expiring_soon`        | Find memberships expiring within N days                                                                                              |
+| `get_todays_visitors`                   | Get all visitors for today                                                                                                           |
+| `get_todays_bookings`                   | Get all room bookings for today                                                                                                      |
+| `get_unpaid_invoices`                   | Get all outstanding invoices                                                                                                         |
+| `get_members_by_company`                | Get all members from a company                                                                                                       |
+| `get_active_members`                    | Get all currently active members                                                                                                     |
+| `get_inventory`                         | Get a consolidated inventory of resources, resource types, and rates in a single response                                            |
+| `get_pricing_catalog`                   | Get a consolidated pricing catalog (plans, products, addons, resource rates, price lists) for website ↔ OfficeRnD pricing comparison |
+| `get_membership_offerings`              | Get customer-facing plans, passes, and addons for a signup / pricing page                                                            |
+| `get_member_billing_summary`            | Get a member's memberships, contracts, invoices, charges, payments, and fees in one call                                             |
+| `list_resource_rates_for_resource`      | List resource rates that apply to a specific bookable resource (avoids the /resource-rates unfiltered validation error)              |
+| `get_resource_rate_cancellation_policy` | Get the cancellation policy linked to a specific resource rate                                                                       |
+| `preview_checkout`                      | Preview pricing, fees, and taxes for a checkout without committing to it (read-only)                                                 |
+| `execute_checkout`                      | Finalize a plan/membership/booking checkout, including billing (write operation)                                                     |
 
 ### Setup Tool
 
@@ -283,6 +287,18 @@ The server automatically generates tools from the resource registry. Every resou
 
 "Show me all resources, their types, and pricing rates for our downtown location"
 → get_inventory with locationId
+
+"Compare our website's plan pricing with what OfficeRnD has for the downtown location"
+→ get_pricing_catalog with locationId
+
+"What plans and passes can new members sign up for right now?"
+→ get_membership_offerings
+
+"Give me a full billing view for member abc123 — memberships, invoices, charges, payments"
+→ get_member_billing_summary with memberId: abc123
+
+"What are the pricing rates for this specific meeting room?"
+→ list_resource_rates_for_resource with resourceId
 
 "What's the cancellation policy for this resource rate?"
 → get_resource_rate_cancellation_policy with resourceRateId

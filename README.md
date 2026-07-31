@@ -219,22 +219,26 @@ The server automatically generates tools from the resource registry. Every resou
 
 ### Business / AI Convenience Tools
 
-| Tool                             | Description                                                                               |
-| -------------------------------- | ----------------------------------------------------------------------------------------- |
-| `find_available_rooms`           | Find available meeting rooms for a time range                                             |
-| `find_memberships_expiring_soon` | Find memberships expiring within N days                                                   |
-| `get_todays_visitors`            | Get all visitors for today                                                                |
-| `get_todays_bookings`            | Get all room bookings for today                                                           |
-| `get_unpaid_invoices`            | Get all outstanding invoices                                                              |
-| `get_members_by_company`         | Get all members from a company                                                            |
-| `get_active_members`             | Get all currently active members                                                          |
-| `get_inventory`                  | Get a consolidated inventory of resources, resource types, and rates in a single response |
+| Tool                                    | Description                                                                               |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `find_available_rooms`                  | Find available meeting rooms for a time range                                             |
+| `find_memberships_expiring_soon`        | Find memberships expiring within N days                                                   |
+| `get_todays_visitors`                   | Get all visitors for today                                                                |
+| `get_todays_bookings`                   | Get all room bookings for today                                                           |
+| `get_unpaid_invoices`                   | Get all outstanding invoices                                                              |
+| `get_members_by_company`                | Get all members from a company                                                            |
+| `get_active_members`                    | Get all currently active members                                                          |
+| `get_inventory`                         | Get a consolidated inventory of resources, resource types, and rates in a single response |
+| `get_resource_rate_cancellation_policy` | Get the cancellation policy linked to a specific resource rate                            |
+| `preview_checkout`                      | Preview pricing, fees, and taxes for a checkout without committing to it (read-only)      |
+| `execute_checkout`                      | Finalize a plan/membership/booking checkout, including billing (write operation)          |
 
 ### Setup Tool
 
 | Tool                  | Description                                                                     |
 | --------------------- | ------------------------------------------------------------------------------- |
 | `configure_officernd` | Configure credentials at runtime — use this if env vars were not set at startup |
+| `health_check`        | Check configuration status and verify connectivity to the OfficeRnD API         |
 
 ### Example AI Interactions
 
@@ -256,6 +260,15 @@ The server automatically generates tools from the resource registry. Every resou
 
 "Show me all resources, their types, and pricing rates for our downtown location"
 → get_inventory with locationId
+
+"What's the cancellation policy for this resource rate?"
+→ get_resource_rate_cancellation_policy with resourceRateId
+
+"Preview the checkout cost for this member on this plan before charging them"
+→ preview_checkout with filters (memberId, planId)
+
+"Is the OfficeRnD connection working?"
+→ health_check
 ```
 
 ---
@@ -523,15 +536,16 @@ Logs are written to **stderr** to keep MCP's stdout protocol clean.
 
 The following OfficeRnD API resources are not yet implemented. They are documented here for follow-up:
 
-| Resource                | Notes                        |
-| ----------------------- | ---------------------------- |
-| Access Control          | Badge/door access management |
-| Occupancy tracking      | Real-time sensor data        |
-| Checkout flows          | Online booking checkout      |
-| Multi-org federation    | Cross-organization queries   |
-| Webhooks management     | Endpoint delivery status     |
-| Document uploads        | Binary file operations       |
-| OpenAPI code generation | Automatic SDK regeneration   |
+| Resource                 | Notes                                                                                                       |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Access Control           | Badge/door access management                                                                                |
+| Occupancy tracking       | Real-time sensor data                                                                                       |
+| Multi-org federation     | Cross-organization queries                                                                                  |
+| Webhooks delivery status | Delivery/retry status for registered webhooks (CRUD via `list_webhooks`/`create_webhook`/etc. is supported) |
+| Document uploads         | Binary file operations                                                                                      |
+| OpenAPI code generation  | Automatic SDK regeneration                                                                                  |
+
+> Checkout flows (`preview_checkout` / `execute_checkout`) and resource-rate cancellation policy lookups (`get_resource_rate_cancellation_policy`) are now supported — see [MCP Tools](#mcp-tools).
 
 The `RESOURCES` registry in `packages/sdk/src/resources/registry.ts` is designed for declarative extension — adding a new resource requires a single entry.
 

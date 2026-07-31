@@ -198,6 +198,7 @@ The server automatically generates tools from the resource registry. Every resou
 | Resource Rates            | `list_resource_rates`, `get_resource_rate`                                                                                       |
 | Cancellation Policies     | `list_cancellation_policies`, `get_cancellation_policy`                                                                          |
 | Plans                     | `list_plans`, `get_plan`, `create_plan`, `update_plan`, `delete_plan`                                                            |
+| Billing Plans             | `list_billing_plans`, `get_billing_plan`, `create_billing_plan`, `update_billing_plan`, `delete_billing_plan`                    |
 | Visitors                  | `list_visitors`, `get_visitor`, `count_visitors`, `create_visitor`, `update_visitor`, `delete_visitor`                           |
 | Visits                    | `list_visits`, `get_visit`, `count_visits`, `create_visit`, `update_visit`, `delete_visit`                                       |
 | Events                    | `list_events`, `get_event`, `count_events`, `create_event`, `update_event`, `delete_event`                                       |
@@ -218,15 +219,16 @@ The server automatically generates tools from the resource registry. Every resou
 
 ### Business / AI Convenience Tools
 
-| Tool                             | Description                                   |
-| -------------------------------- | --------------------------------------------- |
-| `find_available_rooms`           | Find available meeting rooms for a time range |
-| `find_memberships_expiring_soon` | Find memberships expiring within N days       |
-| `get_todays_visitors`            | Get all visitors for today                    |
-| `get_todays_bookings`            | Get all room bookings for today               |
-| `get_unpaid_invoices`            | Get all outstanding invoices                  |
-| `get_members_by_company`         | Get all members from a company                |
-| `get_active_members`             | Get all currently active members              |
+| Tool                             | Description                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `find_available_rooms`           | Find available meeting rooms for a time range                                             |
+| `find_memberships_expiring_soon` | Find memberships expiring within N days                                                   |
+| `get_todays_visitors`            | Get all visitors for today                                                                |
+| `get_todays_bookings`            | Get all room bookings for today                                                           |
+| `get_unpaid_invoices`            | Get all outstanding invoices                                                              |
+| `get_members_by_company`         | Get all members from a company                                                            |
+| `get_active_members`             | Get all currently active members                                                          |
+| `get_inventory`                  | Get a consolidated inventory of resources, resource types, and rates in a single response |
 
 ### Setup Tool
 
@@ -251,6 +253,9 @@ The server automatically generates tools from the resource registry. Every resou
 
 "How many unpaid invoices do we have?"
 → get_unpaid_invoices
+
+"Show me all resources, their types, and pricing rates for our downtown location"
+→ get_inventory with locationId
 ```
 
 ---

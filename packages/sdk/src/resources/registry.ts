@@ -223,6 +223,12 @@ export const RESOURCES: ResourceDef[] = [
   },
   // Billing resources
   {
+    name: 'billing_plan',
+    path: '/billing-plans',
+    description: 'Billing plans for recurring charges and subscriptions',
+    operations: ['list', 'get', 'create', 'update', 'delete'],
+  },
+  {
     name: 'charge',
     path: '/charges',
     description: 'Individual billing charges applied to members or companies',

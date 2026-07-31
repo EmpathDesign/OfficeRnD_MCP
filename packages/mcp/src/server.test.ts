@@ -277,6 +277,67 @@ describe('createServer', () => {
     expect(result.message).toContain('network error');
   });
 
+  it('health_check always includes capabilities with readTools and writeTools', async () => {
+    const client = createMockClient();
+    const tools = buildTools({ current: client as never });
+    const tool = tools.find((entry) => entry.name === 'health_check');
+
+    const result = (await tool?.handler({})) as {
+      capabilities: {
+        totalTools: number;
+        readTools: { count: number; tools: string[] };
+        writeTools: { count: number; tools: string[] };
+        note: string;
+      };
+    };
+
+    expect(result.capabilities).toBeDefined();
+    expect(result.capabilities.totalTools).toBe(tools.length);
+    expect(result.capabilities.readTools.count).toBeGreaterThan(0);
+    expect(result.capabilities.writeTools.count).toBeGreaterThan(0);
+    expect(result.capabilities.readTools.tools).toContain('list_members');
+    expect(result.capabilities.writeTools.tools).toContain('create_member');
+    expect(result.capabilities.writeTools.tools).toContain('update_member');
+    expect(result.capabilities.writeTools.tools).toContain('delete_member');
+    expect(result.capabilities.note).toContain('[WRITE]');
+  });
+
+  it('health_check capabilities are present even when unconfigured', async () => {
+    const tool = buildTools({ current: null }).find((entry) => entry.name === 'health_check');
+
+    const result = (await tool?.handler({})) as {
+      capabilities: { writeTools: { count: number; tools: string[] } };
+    };
+
+    expect(result.capabilities).toBeDefined();
+    expect(result.capabilities.writeTools.count).toBeGreaterThan(0);
+    expect(result.capabilities.writeTools.tools).toContain('create_booking');
+  });
+
+  it('write tools have [WRITE] prefix in their descriptions', () => {
+    const tools = buildTools({ current: null });
+    const writeToolNames = ['create_member', 'update_member', 'delete_member', 'execute_checkout'];
+    for (const name of writeToolNames) {
+      const tool = tools.find((t) => t.name === name);
+      expect(tool, `${name} should exist`).toBeDefined();
+      expect(tool?.description, `${name} description should start with [WRITE]`).toMatch(
+        /^\[WRITE\]/,
+      );
+    }
+  });
+
+  it('read tools do not have [WRITE] prefix in their descriptions', () => {
+    const tools = buildTools({ current: null });
+    const readToolNames = ['list_members', 'get_member', 'count_members'];
+    for (const name of readToolNames) {
+      const tool = tools.find((t) => t.name === name);
+      expect(tool, `${name} should exist`).toBeDefined();
+      expect(tool?.description, `${name} description should not contain [WRITE]`).not.toMatch(
+        /^\[WRITE\]/,
+      );
+    }
+  });
+
   it('unknown tool returns isError true', async () => {
     const client = createMockClient();
     const server = createServer(client as never);

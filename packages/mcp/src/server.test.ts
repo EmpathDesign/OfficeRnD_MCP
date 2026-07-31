@@ -148,8 +148,42 @@ describe('createServer', () => {
         'get_unpaid_invoices',
         'get_members_by_company',
         'get_active_members',
+        'get_inventory',
       ]),
     );
+  });
+
+  it('get_inventory calls client.list for resources, resource-types, and resource-rates', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_inventory',
+    );
+
+    const result = (await tool?.handler({})) as {
+      resources: unknown[];
+      resourceTypes: unknown[];
+      rates: unknown[];
+    };
+
+    expect(client.list).toHaveBeenCalledWith('/resources', {});
+    expect(client.list).toHaveBeenCalledWith('/resource-types', {});
+    expect(client.list).toHaveBeenCalledWith('/resource-rates', {});
+    expect(result).toHaveProperty('resources');
+    expect(result).toHaveProperty('resourceTypes');
+    expect(result).toHaveProperty('rates');
+  });
+
+  it('get_inventory passes locationId filter when provided', async () => {
+    const client = createMockClient();
+    const tool = buildTools({ current: client as never }).find(
+      (entry) => entry.name === 'get_inventory',
+    );
+
+    await tool?.handler({ locationId: 'office-1' });
+
+    expect(client.list).toHaveBeenCalledWith('/resources', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/resource-types', { officeId: 'office-1' });
+    expect(client.list).toHaveBeenCalledWith('/resource-rates', { officeId: 'office-1' });
   });
 
   it('unknown tool returns isError true', async () => {

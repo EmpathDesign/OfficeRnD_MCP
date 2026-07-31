@@ -101,3 +101,26 @@ export async function activeMembers(
 
   return client.list('/members', params);
 }
+
+export interface InventoryResult {
+  resources: unknown[];
+  resourceTypes: unknown[];
+  rates: unknown[];
+}
+
+export async function getInventory(
+  client: OfficeRnDClient,
+  locationId?: string,
+): Promise<InventoryResult> {
+  const params: Record<string, string | number | boolean | undefined> = locationId
+    ? { officeId: locationId }
+    : {};
+
+  const [resources, resourceTypes, rates] = await Promise.all([
+    client.list('/resources', params),
+    client.list('/resource-types', params),
+    client.list('/resource-rates', params),
+  ]);
+
+  return { resources, resourceTypes, rates };
+}

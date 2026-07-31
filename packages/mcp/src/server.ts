@@ -5,6 +5,7 @@ import type { OfficeRnDConfig } from '@officernd/sdk';
 import {
   activeMembers,
   findAvailableRooms,
+  getInventory,
   membersByCompany,
   membershipsExpiringSoon,
   todaysBookings,
@@ -398,6 +399,22 @@ export function buildTools(clientRef: { current: OfficeRnDClient | null }): Tool
         const client = clientRef.current;
         if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
         return activeMembers(client, args.locationId ? String(args.locationId) : undefined);
+      },
+    },
+    {
+      name: 'get_inventory',
+      description:
+        'Get a consolidated inventory of all bookable resources, resource types, and pricing rates in a single response. Reduces multi-call pagination overhead.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          locationId: { type: 'string', description: 'Optional location/office ID to filter by' },
+        },
+      },
+      handler: async (args) => {
+        const client = clientRef.current;
+        if (!client) throw new Error(NOT_CONFIGURED_MESSAGE);
+        return getInventory(client, args.locationId ? String(args.locationId) : undefined);
       },
     },
   );

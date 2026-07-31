@@ -228,6 +228,12 @@ The server automatically generates tools from the resource registry. Every resou
 | `get_members_by_company`         | Get all members from a company                |
 | `get_active_members`             | Get all currently active members              |
 
+### Setup Tool
+
+| Tool                  | Description                                                                     |
+| --------------------- | ------------------------------------------------------------------------------- |
+| `configure_officernd` | Configure credentials at runtime — use this if env vars were not set at startup |
+
 ### Example AI Interactions
 
 ```
@@ -261,7 +267,9 @@ The server automatically generates tools from the resource registry. Every resou
 4. Run command: `OfficeRnD: Generate MCP Configuration`
 5. The extension writes `.vscode/mcp.json` with secure environment variable references
 
-#### Option B: Manual Configuration
+> **Note:** The generated config uses `${env:OFFICERND_CLIENT_ID}` references. You must also export those variables in your shell profile (`.bashrc`, `.zshrc`, etc.) so the MCP server process can read them. See [Option B](#option-b-manual-configuration-with-environment-variables) below for details.
+
+#### Option B: Manual Configuration with Environment Variables
 
 Create or edit `.vscode/mcp.json` in your workspace:
 
@@ -286,6 +294,31 @@ Set environment variables in your shell profile (`.bashrc`, `.zshrc`, etc.):
 export OFFICERND_CLIENT_ID="your_client_id"
 export OFFICERND_CLIENT_SECRET="your_client_secret"
 ```
+
+#### Option C: Runtime Configuration via `configure_officernd` (Simplest)
+
+The server can start without any credentials and be configured later through its `configure_officernd` tool. This is the easiest option when you do not want to set environment variables.
+
+Create `.vscode/mcp.json` with just the command — no `env` block required:
+
+```json
+{
+  "servers": {
+    "officernd": {
+      "command": "officernd-mcp"
+    }
+  }
+}
+```
+
+Then ask your AI assistant to configure the connection:
+
+```
+"Configure OfficeRnD with clientId my-client-id, clientSecret my-secret, orgSlug my-org"
+→ configure_officernd
+```
+
+The AI will call the `configure_officernd` tool and all other tools will become available for the lifetime of that server process.
 
 ---
 
@@ -442,13 +475,15 @@ The MCP server automatically generates all tools from this registry. No addition
 
 ## Troubleshooting
 
-### Server doesn't start
+### Tools return "OfficeRnD is not configured"
+
+The server starts without credentials when no environment variables are set. To authenticate, ask your AI assistant to call the `configure_officernd` tool:
 
 ```
-Error: OFFICERND_CLIENT_ID and OFFICERND_CLIENT_SECRET environment variables are required.
+"Configure OfficeRnD with my credentials"
 ```
 
-Ensure both environment variables are set before running `officernd-mcp`.
+Or set the `OFFICERND_CLIENT_ID` and `OFFICERND_CLIENT_SECRET` environment variables before starting the server (see [Configuration](#configuration)).
 
 ### Authentication errors
 

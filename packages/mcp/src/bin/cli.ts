@@ -10,23 +10,26 @@ const apiVersion = process.env.OFFICERND_API_VERSION as 'v1' | 'v2' | undefined;
 const scopesRaw = process.env.OFFICERND_SCOPES;
 const scopes = scopesRaw ? scopesRaw.split(/[,\s]+/).filter(Boolean) : undefined;
 
-if (!clientId || !clientSecret) {
+let initialClient: OfficeRnDClient | null = null;
+
+if (clientId && clientSecret) {
+  initialClient = new OfficeRnDClient({
+    clientId,
+    clientSecret,
+    organizationSlug,
+    apiVersion: apiVersion ?? 'v2',
+    scopes,
+  });
   process.stderr.write(
-    'Error: OFFICERND_CLIENT_ID and OFFICERND_CLIENT_SECRET environment variables are required.\n',
+    'OfficeRnD MCP server running on stdio (authenticated via environment variables)\n',
   );
-  process.exit(1);
+} else {
+  process.stderr.write(
+    'OfficeRnD MCP server running on stdio (not configured — call the configure_officernd tool to authenticate)\n',
+  );
 }
 
-const client = new OfficeRnDClient({
-  clientId,
-  clientSecret,
-  organizationSlug,
-  apiVersion: apiVersion ?? 'v2',
-  scopes,
-});
-
-const server = createServer(client);
+const server = createServer(initialClient);
 const transport = new StdioServerTransport();
 
 await server.connect(transport);
-process.stderr.write('OfficeRnD MCP server running on stdio\n');
